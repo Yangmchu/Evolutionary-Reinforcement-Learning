@@ -28,7 +28,7 @@ def rollout_worker(id, type, task_pipe, result_pipe, store_data, model_bucket, e
         state = utils.to_tensor(state)
         while True:  # unless done
 
-            if type == 'pg': action = net.noisy_action(state)
+            if type == 'pg': action = net.noisy_action(state) #pg需要探索，而evo只需要fit值
             else: action = net.clean_action(state)
 
             action = utils.to_numpy(action)
