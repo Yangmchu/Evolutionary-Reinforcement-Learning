@@ -48,7 +48,7 @@ class DDQN(object):
         q_val = logits.gather(1, action_batch)
 
         q_loss = (next_q_value - q_val)**2
-        q_loss -= self.alpha*entropy
+        q_loss = q_loss -  self.alpha*entropy
         q_loss = q_loss.mean()
 
 

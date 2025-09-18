@@ -1,8 +1,10 @@
 import numpy as np, os, time, random
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 from envs_repo.constructor import EnvConstructor
 from models.constructor import ModelConstructor
 from core.params import Parameters
 import argparse, torch
+torch.autograd.set_detect_anomaly(True)
 from algos.erl_trainer import ERL_Trainer
 
 parser = argparse.ArgumentParser()
@@ -49,7 +51,8 @@ env_constructor = EnvConstructor(args.env_name, args.frameskip)
 model_constructor = ModelConstructor(env_constructor.state_dim, env_constructor.action_dim, args.hidden_size)
 
 
-ai = ERL_Trainer(args, model_constructor, env_constructor)
-ai.train(args.total_steps)
+if __name__ == "__main__":
+    ai = ERL_Trainer(args, model_constructor, env_constructor)
+    ai.train(args.total_steps)
 
 

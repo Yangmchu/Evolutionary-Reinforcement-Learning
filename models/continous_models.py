@@ -58,7 +58,7 @@ class Gaussian_FF(nn.Module):
         log_prob = normal.log_prob(x_t)
 
         # Enforcing Action Bound
-        log_prob -= torch.log(1 - action.pow(2) + self.epsilon)
+        log_prob = log_prob - torch.log(1 - action.pow(2) + self.epsilon)
         log_prob = log_prob.sum(1, keepdim=True) #因为是联合概率，相乘，而log所以是sum
 
         return action, log_prob, None,None,torch.tanh(mean)
