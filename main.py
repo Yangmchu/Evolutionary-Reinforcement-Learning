@@ -8,7 +8,7 @@ from algos.erl_trainer import ERL_Trainer
 parser = argparse.ArgumentParser()
 
 #######################  COMMANDLINE - ARGUMENTS ######################
-parser.add_argument('--env', type=str, help='Env Name',  default='Pendulum-v0')
+parser.add_argument('--env', type=str, help='Env Name',  default='Pendulum-v1')
 parser.add_argument('--seed', type=int, help='Seed', default=991)
 parser.add_argument('--savetag', type=str, help='#Tag to append to savefile',  default='')
 parser.add_argument('--gpu_id', type=int, help='#GPU ID ',  default=0)
@@ -28,7 +28,7 @@ parser.add_argument('--learning_start', type=int, help='Frames to wait before le
 
 #ALGO SPECIFIC ARGS
 parser.add_argument('--popsize', type=int, help='#Policies in the population',  default=10)
-parser.add_argument('--rollsize', type=int, help='#Policies in rollout size',  default=5)
+parser.add_argument('--rollsize', type=int, help='#Policies in rollout size',  default=5) # rollout_size 决定了有多少个相同的副本在为单个学习器（Learner）收集数据。
 parser.add_argument('--gradperstep', type=float, help='#Gradient step per env step',  default=1.0)
 parser.add_argument('--num_test', type=int, help='#Test envs to average on',  default=5)
 

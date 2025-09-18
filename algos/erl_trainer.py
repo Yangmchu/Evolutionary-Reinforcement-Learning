@@ -50,7 +50,7 @@ class ERL_Trainer:
 		self.evo_result_pipes = [Pipe() for _ in range(args.pop_size)]
 		self.evo_workers = [Process(target=rollout_worker, args=(id, 'evo', self.evo_task_pipes[id][1], self.evo_result_pipes[id][0], args.rollout_size > 0, self.population, env_constructor)) for id in range(args.pop_size)]
 		for worker in self.evo_workers: worker.start()
-		self.evo_flag = [True for _ in range(args.pop_size)]
+		self.evo_flag = [True for _ in range(args.pop_size)] #这行代码目前来看是没有作用的
 
 		#Learner rollout workers
 		self.task_pipes = [Pipe() for _ in range(args.rollout_size)]
@@ -79,6 +79,7 @@ class ERL_Trainer:
 		gen_max = -float('inf')
 
 		#Start Evolution rollouts
+		#进行评估
 		if self.args.pop_size > 1:
 			for id, actor in enumerate(self.population):
 				self.evo_task_pipes[id][0].send(id)
@@ -86,19 +87,19 @@ class ERL_Trainer:
 		#Sync all learners actor to cpu (rollout) actor and start their rollout
 		self.learner.actor.cpu()
 		for rollout_id in range(len(self.rollout_bucket)):
-			utils.hard_update(self.rollout_bucket[rollout_id], self.learner.actor)
-			self.task_pipes[rollout_id][0].send(0)
+			utils.hard_update(self.rollout_bucket[rollout_id], self.learner.actor) #bucket中的所有策略都是同一个网络
+			self.task_pipes[rollout_id][0].send(0) #因为都是一样的 所以只需要传入第一个
 		self.learner.actor.to(device=self.device)
 
 		#Start Test rollouts
 		if gen % self.args.test_frequency == 0:
 			self.test_flag = True
-			for pipe in self.test_task_pipes: pipe[0].send(0)
+			for pipe in self.test_task_pipes: pipe[0].send(0) #因为都是一样的 所以只需要传入第一个
 
 
 		############# UPDATE PARAMS USING GRADIENT DESCENT ##########
 		if self.replay_buffer.__len__() > self.args.learning_start: ###BURN IN PERIOD
-			for _ in range(int(self.gen_frames * self.args.gradperstep)):
+			for _ in range(int(self.gen_frames * self.args.gradperstep)): # self.gen_frames: 代表当前世代收集到的总帧数； self.args.gradperstep: 一个超参数，表示每收集一帧数据，就执行多少次梯度更新。
 				s, ns, a, r, done = self.replay_buffer.sample(self.args.batch_size)
 				self.learner.update_parameters(s, ns, a, r, done)
 
@@ -106,16 +107,16 @@ class ERL_Trainer:
 
 
 		########## JOIN ROLLOUTS FOR EVO POPULATION ############
-		all_fitness = []; all_eplens = []
-		if self.args.pop_size > 1:
+		all_fitness = []; all_eplens = [] #eplens 表示
+		if self.args.pop_size > 1: #当pop_size只有1时，没必要进行EC
 			for i in range(self.args.pop_size):
 				_, fitness, frames, trajectory = self.evo_result_pipes[i][1].recv()
 
 				all_fitness.append(fitness); all_eplens.append(frames)
 				self.gen_frames+= frames; self.total_frames += frames
 				self.replay_buffer.add(trajectory)
-				self.best_score = max(self.best_score, fitness)
-				gen_max = max(gen_max, fitness)
+				self.best_score = max(self.best_score, fitness) #  更新整个训练历史中的最高得分。
+				gen_max = max(gen_max, fitness) # 更新当前世代中的最高得分
 
 		########## JOIN ROLLOUTS FOR LEARNER ROLLOUTS ############
 		rollout_fitness = []; rollout_eplens = []
